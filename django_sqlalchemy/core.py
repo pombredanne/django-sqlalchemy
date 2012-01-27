@@ -17,8 +17,13 @@ SQLALCHEMY_DATABASES = {
 """
 
 from django.core.exceptions import ImproperlyConfigured
+from django.conf import settings
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import event
+
+from .events import on_poll_connection_checkout
 
 class EngineManager(object):
     def __init__(self, databases):
@@ -33,15 +38,16 @@ class EngineManager(object):
         if alias not in self.databases:
             raise ImproperlyConfigured("Alias '%s' is not found in database configuration." % (alias))
         
-        connection_string = self.database[alias]['connect_string']
-        options = self.database[alias].get('options', {})
+        connection_string = self.databases[alias]['connect_string']
+        options = self.databases[alias].get('options', {})
         self._engines[alias] = create_engine(connection_string, **options)
+        event.listen(self._engines[alias], 'checkout', on_poll_connection_checkout)
 
     def __getitem__(self, alias):
         if alias in self._engines:
             return self._engines[alias]
         
-        self._mk_engine()
+        self._mk_engine(alias)
         return self._engines[alias]
 
 
@@ -61,7 +67,7 @@ class SessionManager(object):
         return self._sessions[alias]()
 
 
-engines = EngineManager()
+engines = EngineManager(settings.SQLALCHEMY_DATABASES)
 engine = engines['default']
 sessions = SessionManager()
 
