@@ -18,7 +18,7 @@ class Command(NoArgsCommand):
         make_option('--noinput', action='store_false', dest='interactive', default=True,
             help='Tells Django to NOT prompt the user for input of any kind.'),
         make_option('--database', action='store', dest='database',
-            default=DEFAULT_DB_ALIAS, help='Nominates a database to synchronize. '
+            default='default', help='Nominates a database to synchronize. '
                 'Defaults to the "default" database.'),
     )
     help = "Create the database tables for all apps in INSTALLED_APPS whose tables haven't already been created."
@@ -34,7 +34,7 @@ class Command(NoArgsCommand):
 
         for app_path in settings.INSTALLED_APPS:
             try:
-                app_mod = import_module(app_path + '.models'
+                app_mod = import_module(app_path + '.models')
             except ImportError:
                 continue
 
