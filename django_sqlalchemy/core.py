@@ -59,17 +59,17 @@ class SessionManager(object):
         engine = engines[alias]
         self._sessions[alias] = sessionmaker(bind=engine)
 
-    def __getitem__(self, alias):
+    def get(self, alias, *args, **kwargs):
         if alias in self._sessions:
-            return self._sessions[alias]()
+            return self._sessions[alias](*args, **kwargs)
 
         self._mk_session(alias)
-        return self._sessions[alias]()
+        return self._sessions[alias](*args, **kwargs)
 
 
 engines = EngineManager(settings.SQLALCHEMY_DATABASES)
 engine = engines['default']
 sessions = SessionManager()
 
-def create_session(alias):
-    return sessions[alias]
+def create_session(alias='default', *args, **kwargs):
+    return sessions.get(alias, *args, **kwargs)
