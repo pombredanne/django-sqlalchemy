@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import sqlalchemy.types as types
-from .objects import *
+from . import *
 
 import re
 
-class PointType(types.TypeEngine):
-    __visit_name__ = 'POINT'
+class PointType(types.UserDefinedType):
     rx = re.compile(r'\(([\d\.\-]*),\s*([\d\.\-]*)\)')
 
     def get_col_spec(self):
@@ -22,13 +21,12 @@ class PointType(types.TypeEngine):
                 raise ValueError("bad point representation: %r" % value)
 
             return Point([int(x) if "." not in x else float(x) \
-                for x in res.groups()]
+                for x in res.groups()])
 
         return process
 
 
-class CircleType(types.TypeEngine):
-    __visit_name__ = 'CIRCLE'
+class CircleType(types.UserDefinedType):
     rx = re.compile(r'<\(([\d\.\-]*),([\d\.\-]*)\),([\d\.\-]*)>')
 
     def get_col_spec(self):
@@ -39,6 +37,9 @@ class CircleType(types.TypeEngine):
 
     def result_processor(self, dialect, coltype):
         def process(value):
+            if value is None or isinstance(value, Circle):
+                return value
+
             res =  self.rx.search(value)
             if not res:
                 raise ValueError("bad point representation: %r" % value)
@@ -49,8 +50,7 @@ class CircleType(types.TypeEngine):
         return process
 
 
-class BoxType(types.TypeEngine):
-    __visit_name__ = 'BOX'
+class BoxType(types.UserDefinedType):
     rx = re.compile(r'\(([\d\.\-]*),\s*([\d\.\-]*)\),\s*\(([\d\.\-]*),\s*([\d\.\-]*)\)')
 
     def get_col_spec(self):
@@ -61,19 +61,24 @@ class BoxType(types.TypeEngine):
 
     def result_processor(self, dialect, coltype):
         def process(value):
+            print type(value)
+            if value is None:
+                return value
+            
+            if isinstance(value, Box):
+                return value
+
             res =  self.rx.search(value)
             if not res:
                 raise ValueError("bad point representation: %r" % value)
             
             return Box([int(x) if "." not in x else float(x) \
-                for x in rxres.groups()])
+                for x in res.groups()])
 
         return process
 
 
-class PathType(types.TypeEngine):
-    __visit_name__ = 'PATH'
-
+class PathType(types.UserDefinedType):
     rx = re.compile(r'^((?:\(|\[))(.*)(?:\)|\])$')
     rx_point = re.compile(r'\(([\d\.\-]*),\s*([\d\.\-]*)\)')
 
