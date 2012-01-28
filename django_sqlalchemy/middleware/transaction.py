@@ -11,7 +11,7 @@ from django.conf import settings
 SQLALCHEMY_SESSION_AUTOCOMMIT = getattr(settings, 'SQLALCHEMY_SESSION_AUTOCOMMIT', False)
 
 
-class EnsuerSession(object):
+class EnsureSession(object):
     def process_request(self, request):
         global local
         local.session = request.s = create_session(
