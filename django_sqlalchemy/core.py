@@ -23,7 +23,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import event
 
-from .events import on_poll_connection_checkout
+from .events import on_pool_connection_checkout
 
 class EngineManager(object):
     def __init__(self, databases):
@@ -41,7 +41,7 @@ class EngineManager(object):
         connection_string = self.databases[alias]['connect_string']
         options = self.databases[alias].get('options', {})
         self._engines[alias] = create_engine(connection_string, **options)
-        event.listen(self._engines[alias], 'checkout', on_poll_connection_checkout)
+        event.listen(self._engines[alias], 'checkout', on_pool_connection_checkout)
 
     def __getitem__(self, alias):
         if alias in self._engines:
