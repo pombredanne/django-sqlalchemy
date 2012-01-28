@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from .core import create_session
+from .core import create_session, remove_session
 import threading
-
-local = threading.local()
-local.transaction = None
 
 from django.conf import settings
 
@@ -19,15 +16,16 @@ class EnsureSession(object):
         )
 
     def process_exception(self, request, exception):
-        if request.s.transaction.is_active:
-            request.s.transaction.rollback()
-        request.s.__class__.remove()
+        request.s.rollback()
+        request.s.close()
+        remove_session()
 
     def process_response(self, request, response):
-        if request.s.transaction.is_active:
-            request.s.transaction.commit()
-        
-        global local
-        request.s.transaction.close()
-        request.s.__class__.remove()
+        try:
+            request.s.commit()
+        except:
+            request.s.rollback()
+
+        request.s.close()
+        remove_session()
         return response

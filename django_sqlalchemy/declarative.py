@@ -2,6 +2,7 @@
 
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer
 
 class Base(object):
     @declared_attr
