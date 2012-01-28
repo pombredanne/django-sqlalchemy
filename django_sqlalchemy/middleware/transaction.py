@@ -21,21 +21,13 @@ class EnsureSession(object):
     def process_exception(self, request, exception):
         if request.s.transaction.is_active:
             request.s.transaction.rollback()
+        request.s.__class__.remove()
 
     def process_response(self, request, response):
         if request.s.transaction.is_active:
             request.s.transaction.commit()
         
         global local
-        local.transaction = None
-
+        request.s.transaction.close()
+        request.s.__class__.remove()
         return response
-
-
-def current_session():
-    """
-    Returns current transaction.
-    """
-
-    global local
-    return local.transaction

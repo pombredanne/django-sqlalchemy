@@ -51,25 +51,37 @@ class EngineManager(object):
         return self._engines[alias]
 
 
+from sqlalchemy.orm import scoped_session
+
 class SessionManager(object):
     def __init__(self):
         self._sessions = {}
 
     def _mk_session(self, alias):
         engine = engines[alias]
-        self._sessions[alias] = sessionmaker(bind=engine)
+        self._sessions[alias] = scoped_session(sessionmaker(bind=engine))
 
-    def get(self, alias, *args, **kwargs):
-        if alias in self._sessions:
-            return self._sessions[alias](*args, **kwargs)
+    def __getitem__(self, key):
+        if key in self._sessions:
+            return self._sessions[key]
 
-        self._mk_session(alias)
-        return self._sessions[alias](*args, **kwargs)
+        self._mk_session(key)
+        return self._sessions[key]
 
+    def __delitem__(self, key):
+        if key in self:
+            self[key].remove()
+
+    def __contains__(self, key):
+        return key in self._sessions
 
 engines = EngineManager(settings.SQLALCHEMY_DATABASES)
 engine = engines['default']
 sessions = SessionManager()
 
 def create_session(alias='default', *args, **kwargs):
-    return sessions.get(alias, *args, **kwargs)
+    session_class = sessions[alias]
+    return session_class(*args, **kwargs)
+
+def remove_session(alias='default'):
+    del sessions[alias]
