@@ -8,6 +8,9 @@ from .types import (
 
 from .expressions import (
     Distance,
+    Overlaps,
+    Contains,
+    ToBox,
 )
 
 from .objects import (
@@ -17,6 +20,7 @@ from .objects import (
 )
 
 __all__ = [
-    'Point', 'Circle', 'Box',
+    'Point', 'Circle', 'Box', 'Overlaps', 'Contains',
     'PointType', 'CircleType', 'BoxType', 'Distance',
+    'ToBox',
 ]

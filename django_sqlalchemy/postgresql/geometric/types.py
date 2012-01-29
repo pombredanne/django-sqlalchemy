@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sqlalchemy.types as types
-from . import *
+from .objects import *
 
 import re
 

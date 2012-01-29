@@ -5,21 +5,23 @@ sys.path.insert(0, '..')
 
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
 from sqlalchemy.dialects.postgresql import REAL
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.sql import func
-from sqlalchemy.sql import expression
+from sqlalchemy.sql import expression, func
 
-import django_sqlalchemy.postgresql.geometric as g
+from django_sqlalchemy.postgresql.geometric import *
 import sqlalchemy.types as types
 import re
 
 # create function expresion
 
 class Distance(expression.FunctionElement):
-    type = REAL()
+    type = None
     name = 'distance'
 
+class CenterPoint(expression.FunctionElement):
+    type = None
+    name = 'center'
 
 @compiles(Distance)
 def default_distance(element, compiler, **kw):
@@ -30,7 +32,29 @@ def default_distance(element, compiler, **kw):
     )
 
 
+@compiles(CenterPoint)
+def default_center(element, compiler, **kw):
+    arg1 = tuple(element.clauses)[0]
+    return "@@ %s" % (compiler.process(arg1))
+
+
+
 engine = create_engine('postgresql://niwi@localhost/test')
+q = select([
+    Distance(Point([0,0]), Point([0,2])),
+    CenterPoint(Circle([0,2,3])),
+])
+
+print str(q)
+c = engine.connect()
+r = c.execute(q)
+
+print list(r)
+c.close()
+
+
+print str(q)
+
 metadata = MetaData()
 metadata.bind = engine
 
@@ -65,11 +89,6 @@ table = Table('foo', metadata,
 )
 
 metadata.create_all()
-
 from sqlalchemy.sql import bindparam
 
-q = table.select().where(
-    Distance(table.c.p, bindparam('_point', type_=PointType)) == bindparam('_num')
-)
 
-c = engine.connect()
